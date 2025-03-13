@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #4cae4c;
+}
+
+#feedContainer {
+    margin-top: 40px;
+    padding: 20px;
+}
+
+.item-frame {
+    display: flex;
+    margin-bottom: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.item-details {
+    flex: 1;
+}
+
+.profile {
+    flex-basis: 200px;
+    padding-left: 20px;
+    text-align: right;
+    font-size: 14px;
+}
+
+.profile h4 {
+    margin: 0;
+}
+
+.profile img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+  </style>
+  
+    <!-- Account Button (Login/Create Account) -->
+    <button id="accountButton" onclick="showRegistrationForm()">Login / Create Account</button>
+
+    <!-- Registration Form -->
+    <div id="registrationForm" class="form-container hidden">
+        <h2>Create an Account</h2>
+        <form id="signupForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+            
+            <label for="profilePhoto">Profile Photo:</label>
+            <input type="file" id="profilePhoto" accept="image/*" required>
+            
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+            
+            <button type="submit">Sign Up</button>
+        </form>
+    </div>
+
+    <!-- Item Upload Form (only visible after logging in) -->
+    <div id="uploadFormContainer" class="form-container hidden">
+        <h2>Upload Item for Sale</h2>
+        <form id="uploadItemForm">
+            <label for="itemTitle">Item Title:</label>
+            <input type="text" id="itemTitle" required>
+            
+            <label for="itemDescription">Description:</label>
+            <textarea id="itemDescription" required></textarea>
+             
+            <label for="itemLocation">Location:</label>
+            <input type="text" id="itemLocation" required>
+            
+            <label for="itemImage">Item Image:</label>
+            <input type="file" id="itemImage" accept="image/*">
+            
+            <label for="itemVideo">Item Video (optional):</label>
+            <input type="file" id="itemVideo" accept="video/*">
+            
+            <label for="itemDocument">Item Document (optional):</label>
+            <input type="file" id="itemDocument" accept="application/pdf, .doc, .docx">
+            
+            <button type="submit">Upload Item</button>
+        </form>
+    </div>
+
+    <!-- Item Feed (Visible to all users) -->
+    <div id="feedContainer">
+        <h2>Items for Sale</h2>
+        <div id="feed"></div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Function to show the registration form
+        function showRegistrationForm() {
+            document.getElementById('registrationForm').classList.remove('hidden');
+            document.getElementById('accountButton').classList.add('hidden');
+        }
+
+        // Function to handle sign-up
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const profilePhotoInput = document.getElementById('profilePhoto');
+            
+            // Handle profile photo upload
+            const profilePhoto = URL.createObjectURL(profilePhotoInput.files[0]);
+            
+            currentUser = {
+                username,
+                phone,
+                email,
+                profilePhoto // Save the photo URL
+            };
+
+            // Hide registration form, show item upload form and feed
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('uploadFormContainer').classList.remove('hidden');
+            document.getElementById('accountButton').classList.add('hidden');
+            alert("Account created successfully!");
+        });
+
+        // Function to handle item upload (only if user is logged in)
+        document.getElementById('uploadItemForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                alert("You must be logged in to upload items.");
+                return;
+            }
+
+            const itemTitle = document.getElementById('itemTitle').value;
+            const itemDescription = document.getElementById('itemDescription').value;
+            const itemLocation = document.getElementById('itemLocation').value;
+
+            const itemImageInput = document.getElementById('itemImage');
+            const itemVideoInput = document.getElementById('itemVideo');
+            const itemDocumentInput = document.getElementById('itemDocument');
+
+            let itemImage = itemImageInput.files.length ? URL.createObjectURL(itemImageInput.files[0]) : null;
+            let itemVideo = itemVideoInput.files.length ? URL.createObjectURL(itemVideoInput.files[0]) : null;
+            let itemDocument = itemDocumentInput.files.length ? URL.createObjectURL(itemDocumentInput.files[0]) : null;
+
+            const newItem = {
+                title: itemTitle,
+                description: itemDescription,
+                location: itemLocation,
+                date: new Date().toISOString(),
+                user: currentUser,
+                image: itemImage,
+                video: itemVideo,
+                document: itemDocument
+            };
+            
+            displayItem(newItem); // Display the newly uploaded item
+        });
+
+        // Function to display items in the feed (for all users)
+        function displayItem(item) {
+            const feedContainer = document.getElementById('feed');
+            const itemFrame = document.createElement('div');
+            itemFrame.classList.add('item-frame');
+            
+            const itemDetails = document.createElement('div');
+            itemDetails.classList.add('item-details');
+            
+            itemDetails.innerHTML = `
+                <h3>${item.title}</h3>
+                <p>${item.description}</p>
+                <p><strong>Location:</strong> ${item.location}</p>
+                <p><strong>Posted on:</strong> ${new Date(item.date).toLocaleString()}</p>
+            `;
+            
+            const profile = document.createElement('div');
+            profile.classList.add('profile');
+            profile.innerHTML = `
+                <img src="${item.user.profilePhoto}" alt="Profile Photo">
+                <h4>${item.user.username}</h4>
+                <p>${item.user.phone}</p>
+            `;
+            
+            // Display the uploaded file (image, video, or document)
+            const mediaContainer = document.createElement('div');
+            if (item.image) {
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.alt = "Item Image";
+                img.style.width = "200px"; // You can adjust the width and height as necessary
+                mediaContainer.appendChild(img);
+            }
+            if (item.video) {
+                const video = document.createElement('video');
+                video.src = item.video;
+                video.controls = true;
+                video.style.width = "200px"; // Adjust video size as necessary
+                mediaContainer.appendChild(video);
+            }
+            if (item.document) {
+                const link = document.createElement('a');
+                link.href = item.document;
+                link.textContent = "Download Item Document";
+                link.target = "_blank";
+                mediaContainer.appendChild(link);
+            }
+
+            itemFrame.appendChild(itemDetails);
+            itemFrame.appendChild(profile);
+            itemFrame.appendChild(mediaContainer); // Add media to the item frame
+            feedContainer.prepend(itemFrame); // Add new items to the top of the feed
+        }
+    </script>
+</body>
+</html>
